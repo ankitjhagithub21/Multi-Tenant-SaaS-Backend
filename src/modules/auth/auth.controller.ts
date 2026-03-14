@@ -1,4 +1,5 @@
-import { registerUser } from "./auth.service";
+import { cookieOptions } from "../../lib/cookies";
+import { loginUser, registerUser } from "./auth.service";
 import {NextFunction, Request, Response} from "express";
 
 export const registerController = async (req:Request, res:Response, next:NextFunction) => {
@@ -14,19 +15,32 @@ export const registerController = async (req:Request, res:Response, next:NextFun
 
     res.status(201).json({
       message: "User registered successfully",
-      user: {
-        id: result.user.id,
-        name: result.user.name,
-        email: result.user.email,
-        organizationId: result.user.organizationId,
-      },
-      organization: {
-        id: result.organization.id,
-        organizationName: result.organization.organizationName,
-      },
+      data:result
     });
   } catch (error) {
     console.error("Error in registerController:", error);
+    next(error);
+  }
+}
+
+
+export const loginController = async (req:Request, res:Response, next:NextFunction) => {
+  try {
+    const { email, password} = req.body;
+
+    const result = await loginUser({
+      email,
+      password,
+    });
+
+    res.cookie('token', result.token, cookieOptions);
+
+    res.status(200).json({
+      message: "User logged in successfully",
+      data:result.user
+    });
+  } catch (error) {
+    console.error("Error in loginController:", error);
     next(error);
   }
 }

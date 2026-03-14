@@ -1,8 +1,8 @@
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import {prisma} from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
-import { RegisterInput } from "./auth.schema";
+import { LoginInput, RegisterInput } from "./auth.schema";
+import { generateToken } from "../../lib/jwt";
 
 
 export const registerUser = async (data: RegisterInput) => {
@@ -37,8 +37,48 @@ export const registerUser = async (data: RegisterInput) => {
       },
     });
 
-    return { user, organization };
+    return user;
   });
 
-  return result;
+  return {
+     id: result.id,
+     email:result.email,
+     name:result.name,
+     organizationId:result.organizationId
+  };
+};
+
+
+
+export const loginUser = async (data: LoginInput) => {
+  const { email, password} = data;
+
+  // check if user already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { email },
+  });
+
+  if (!existingUser) {
+    throw new AppError("Invalid credentials", 401);
+  }
+
+  // compare password
+  const comparePassword = await bcrypt.compare(password, existingUser.password);
+
+  if (!comparePassword) {
+    throw new AppError("Invalid credentials", 401);
+  }
+  // generate JWT token
+  
+  const token = generateToken(existingUser.id, existingUser.organizationId)
+
+  return {
+    token,
+    user:{
+      id:existingUser.id,
+      name:existingUser.name,
+      email:existingUser.email,
+      organizationId:existingUser.organizationId
+    }
+  };
 };

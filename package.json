@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/ankitjhagithub21/Multi-Tenant-SaaS-Backend#readme",
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^25.5.0",
