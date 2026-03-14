@@ -1,0 +1,33 @@
+{
+  "name": "multi-tenant-saas-backend",
+  "version": "1.0.0",
+  "description": "TenantFlow is a production-style backend system designed to demonstrate how modern multi-tenant SaaS platforms are built.",
+  "main": "dist/server.js",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "dev": "tsx watch src/server.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ankitjhagithub21/Multi-Tenant-SaaS-Backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ankitjhagithub21/Multi-Tenant-SaaS-Backend/issues"
+  },
+  "homepage": "https://github.com/ankitjhagithub21/Multi-Tenant-SaaS-Backend#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.5.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1"
+  }
+}
