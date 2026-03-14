@@ -1,10 +1,12 @@
 import express from 'express';
+import { errorHandler } from './utils/errorHandler';
 const app = express();
+
 
 app.use(express.json());
 
-app.get("/",(req,res)=>{
-    res.status(200).json({message:"Hello world."})
-})
+// Global error handler (should be after routes)
+app.use(errorHandler);
+    
 
 export default app;

@@ -1,19 +1,39 @@
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  MEMBER
+}
+
 model Organization {
-  id          String   @id @default(uuid())
-  name        String
-  email       String   @unique 
-  password    String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  organizationName      String
+  users     User[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("organizations")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String      
+  email          String   @unique
+  password       String
+  role           Role
+  organizationId String
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("users")
 }
