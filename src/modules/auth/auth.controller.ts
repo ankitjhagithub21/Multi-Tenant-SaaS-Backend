@@ -44,3 +44,16 @@ export const loginController = async (req:Request, res:Response, next:NextFuncti
     next(error);
   }
 }
+
+export const logoutController = async (req:Request, res:Response, next:NextFunction) => {
+  try {
+    
+    res.clearCookie('token',{maxAge:Date.now()}).status(200).json({
+      message: "User logged out successfully",
+    });
+
+  } catch (error) {
+    console.error("Error in loginController:", error);
+    next(error);
+  }
+}
