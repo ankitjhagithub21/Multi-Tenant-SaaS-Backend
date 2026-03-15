@@ -2,18 +2,6 @@ import { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../lib/jwt";
 import { AppError } from "../utils/AppError";
 
-declare global {
-    namespace Express {
-        interface Request {
-            user?: {
-                id: string;
-                orgId: string;
-                role:string;
-            };
-        }
-    }
-}
-
 export const isAuth= async (req:Request, res:Response, next:NextFunction) => {
     try {
         
@@ -28,7 +16,7 @@ export const isAuth= async (req:Request, res:Response, next:NextFunction) => {
             throw new AppError("Token is invalid or expired", 401);
         }
 
-        req.user = { id: decoded.id, orgId: decoded.orgId, role:decoded.role };
+        req.user = {id: decoded.id, orgId: decoded.orgId, role:decoded.role };
 
         next();
     } catch (error) {
