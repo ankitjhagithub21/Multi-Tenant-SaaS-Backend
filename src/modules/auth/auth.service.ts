@@ -70,7 +70,7 @@ export const loginUser = async (data: LoginInput) => {
   }
   // generate JWT token
   
-  const token = generateToken(existingUser.id, existingUser.organizationId)
+  const token = generateToken(existingUser.id, existingUser.organizationId, existingUser.role)
 
   return {
     token,
@@ -78,8 +78,32 @@ export const loginUser = async (data: LoginInput) => {
       id:existingUser.id,
       name:existingUser.name,
       email:existingUser.email,
-      organizationId:existingUser.organizationId
+      orgId:existingUser.organizationId,
+      role:existingUser.role
     }
   };
 };
+
+
+export const getCurrentUser = async (userId: string) => {
+  // check if user already exists
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    throw new AppError("User not found", 404);
+  }
+
+  return {
+    user:{
+      id:existingUser.id,
+      name:existingUser.name,
+      email:existingUser.email,
+      orgId:existingUser.organizationId,
+      role:existingUser.role
+    }
+  };
+};
+
 

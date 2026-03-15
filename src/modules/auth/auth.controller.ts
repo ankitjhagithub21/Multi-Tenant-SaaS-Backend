@@ -1,5 +1,6 @@
 import { cookieOptions } from "../../lib/cookies";
-import { loginUser, registerUser } from "./auth.service";
+import { AppError } from "../../utils/AppError";
+import { getCurrentUser, loginUser, registerUser } from "./auth.service";
 import {NextFunction, Request, Response} from "express";
 
 export const registerController = async (req:Request, res:Response, next:NextFunction) => {
@@ -53,7 +54,29 @@ export const logoutController = async (req:Request, res:Response, next:NextFunct
     });
 
   } catch (error) {
-    console.error("Error in loginController:", error);
+    console.error("Error in loginoutController:", error);
+    next(error);
+  }
+}
+
+export const getUserController = async (req:Request, res:Response, next:NextFunction) => {
+  try {
+    
+    const userId = req.user?.id;
+
+    if (!userId) {
+      throw new AppError("User not found", 404);
+    }
+
+    const result = await getCurrentUser(userId);
+
+    res.status(200).json({
+      message: "User fetched successfully",
+      data:result
+    });
+
+  } catch (error) {
+    console.error("Error in getUserController:", error);
     next(error);
   }
 }
