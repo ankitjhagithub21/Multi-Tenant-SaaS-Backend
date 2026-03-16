@@ -1,4 +1,4 @@
-import { acceptInviteController, getMembersController, inviteMemberController } from './org.controller';
+import { acceptInviteController, deleteMembersController, getMembersController, inviteMemberController, updateRoleController } from './org.controller';
 import { isAuth } from './../../middlewares/isAuth';
 import { Role } from '../../generated/prisma/enums';
 import { checkRole } from './../../middlewares/checkRole';
@@ -25,5 +25,9 @@ router.post(
 
 
 router.get("/members", isAuth, getMembersController)
+
+router.delete("/members/:memberId", isAuth, checkRole(Role.ADMIN), deleteMembersController)
+
+router.patch("/members/:memberId",isAuth, checkRole(Role.ADMIN), updateRoleController)
 
 export default router;

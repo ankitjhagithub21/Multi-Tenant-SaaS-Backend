@@ -86,24 +86,23 @@ export const loginUser = async (data: LoginInput) => {
 
 
 export const getCurrentUser = async (userId: string) => {
-  // check if user already exists
-  const existingUser = await prisma.user.findUnique({
+  
+  const user = await prisma.user.findUnique({
     where: { id: userId },
+    select:{
+      id:true,
+      name:true,
+      email:true,
+      role:true,
+      organizationId:true,
+    }
   });
 
-  if (!existingUser) {
+  if (!user) {
     throw new AppError("User not found", 404);
   }
 
-  return {
-    user:{
-      id:existingUser.id,
-      name:existingUser.name,
-      email:existingUser.email,
-      orgId:existingUser.organizationId,
-      role:existingUser.role
-    }
-  };
+  return user
 };
 
 

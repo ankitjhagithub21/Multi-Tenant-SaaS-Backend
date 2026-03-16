@@ -36,6 +36,7 @@ model User {
   createdAt DateTime @default(now())
 
   @@map("users")
+  @@unique([id, organizationId])
 }
 
 model Invitation {

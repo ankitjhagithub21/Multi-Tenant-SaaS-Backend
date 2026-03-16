@@ -1,6 +1,6 @@
 import { AppError } from "./../../utils/AppError";
 import { prisma } from "../../lib/prisma";
-import { InviteMemberInput, AcceptInviteInput } from "./org.schema";
+import { InviteMemberInput, AcceptInviteInput, Role } from "./org.schema";
 import { hashPassword } from "../../utils/password";
 import { generateInviteToken } from "../../utils/generateInviteToken";
 import config from "../../config/config";
@@ -121,5 +121,50 @@ export const getMembers = async (orgId: string) => {
     throw new AppError("Organization not found", 404);
   }
 
-  return organization;
+  return organization.users;
+};
+
+export const deleteMember = async (orgId: string, userId: string) => {
+
+  const result = await prisma.user.delete({
+    where: {
+      id_organizationId: {
+        id: userId,
+        organizationId: orgId,
+      },
+    },
+  });
+
+  if (!result) {
+    throw new AppError("Member not found", 404);
+  }
+
+  return true;
+};
+
+export const updateRole = async (orgId: string, userId: string, role: Role) => {
+  const result = await prisma.user.update({
+    where: {
+      id_organizationId: {
+        id: userId,
+        organizationId: orgId,
+      },
+    },
+    data: {
+      role: role,
+    },
+    select:{
+       id:true,
+       email:true,
+       role:true,
+       organizationId:true,
+
+    }
+  });
+
+  if (!result) {
+    throw new AppError("Member not found.", 404);
+  }
+
+  return result;
 };
