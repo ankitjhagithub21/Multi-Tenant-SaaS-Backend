@@ -13,13 +13,11 @@ export const acceptInviteSchema = z.object({
     name: z.string().nonempty({message:"Name is required"}).min(3, "Name must be at least 3 characters long"),
     email: z.string().nonempty({message:"Email is required"}).email("Invalid email address"),
     password: z.string().nonempty({message:"Password is required"}).min(6, "Password must be at least 6 characters long"),
-    accepted:z.boolean().default(false)
 });
 
 
 
 export type Role = z.infer<typeof RoleSchema>;
-
 
 
 export interface InviteMemberInput {
@@ -33,7 +31,10 @@ export interface AcceptInviteInput {
      name:string;
      email:string;
      password:string;
-     orgId:string;
      token:string;
-     accepted:boolean;
+}
+
+export interface AcceptInviteParams {
+  orgId: string
+  token: string
 }

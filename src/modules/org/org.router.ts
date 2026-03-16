@@ -18,8 +18,6 @@ router.post(
 
 router.post(
   "/accept-invite/:token",
-  isAuth,
-  checkRole(Role.ADMIN),
   validateBody(acceptInviteSchema),
   acceptInviteController
 );

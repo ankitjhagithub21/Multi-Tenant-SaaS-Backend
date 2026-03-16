@@ -40,62 +40,66 @@ export const inviteMember = async (data: InviteMemberInput) => {
 }
 
 export const acceptInvite = async (data: AcceptInviteInput) => {
-  const { name, email, password, orgId, accepted, token } = data;
-  
+  const { name, email, password, token } = data;
 
-  //step 1 : get token and check expiration in one query
+  // 1️⃣ get invitation
   const invitation = await prisma.invitation.findUnique({
     where: { token }
-  })
+  });
 
-  if(!invitation){
-    throw new AppError("Invitation not found", 404)
+  if (!invitation) {
+    throw new AppError("Invitation not found", 404);
   }
 
-  if(invitation.accepted){
-     throw new AppError("Invitation already accpeted.", 400)
+  // 2️⃣ already accepted
+  if (invitation.accepted) {
+    throw new AppError("Invitation already accepted.", 400);
   }
 
-  //step 2 : check expiration
-  if(Date.now() > new Date(invitation.expiresAt).getTime()){
-     throw new AppError("Invitation is expired.", 400)
+  // 3️⃣ expiration check
+  if (invitation.expiresAt < new Date()) {
+    throw new AppError("Invitation expired.", 400);
   }
 
-
-  if(token !== invitation.token){
-     throw new AppError("Invalid invitation link.", 400)
+  // 4️⃣ email validation
+  if (invitation.email !== email) {
+    throw new AppError("This invitation is not for this email.", 403);
   }
 
-  if(!accepted){
-     // Update invitation as rejected and return
-     await prisma.invitation.update({
-       where: { id: invitation.id },
-       data: { accepted: false }
-     });
-     return null;
+  // 5️⃣ prevent duplicate users
+  const existingUser = await prisma.user.findUnique({
+    where: { email }
+  });
+
+  if (existingUser) {
+    throw new AppError("User already exists", 409);
   }
 
-  //step 3 : create user and update invitation in parallel
-  const hashedPassword = await hashPassword(password)
-  
-  const [user] = await prisma.$transaction([
-    prisma.user.create({
-      data:{
-         name, 
-         email,
-         password: hashedPassword,
-         role:invitation.role,
-         organizationId: orgId
+  // 6️⃣ hash password
+  const hashedPassword = await hashPassword(password);
+
+  // 7️⃣ transaction
+  const result = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: invitation.role,
+        organizationId: invitation.organizationId
       }
-    }),
-    prisma.invitation.update({
+    });
+
+    await tx.invitation.update({
       where: { id: invitation.id },
       data: { accepted: true }
-    })
-  ]);
+    });
+
+    return user;
+  });
 
   return {
-    orgId:user.organizationId,
-    role:user.role
+    orgId: result.organizationId,
+    role: result.role
   };
-}
+};

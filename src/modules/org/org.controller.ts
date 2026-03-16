@@ -25,18 +25,15 @@ export const inviteMemberController = async (req:Request, res:Response, next:Nex
 
 export const acceptInviteController = async (req:Request, res:Response, next:NextFunction) => {
     try{
-        const { name, email, password, accepted} = req.body;
-
+        const { name, email, password} = req.body;
+       
         const token = req.params.token as string;
 
-        if(!req.user?.orgId){
-            throw new AppError("Organization id is required.", 400)
-        }
+        const result = await acceptInvite({ name, email, password, token });
 
-        const result = await acceptInvite({ name, email, password, orgId:req.user.orgId, token, accepted });
         res.status(201).json({
             success: true,
-            message: "Invitation accepted successfully",
+            message: "You have joined the organization.",
             data: result
         });
     }catch(error){
