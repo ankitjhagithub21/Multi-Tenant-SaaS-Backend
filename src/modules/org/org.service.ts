@@ -1,13 +1,13 @@
-import { AppError } from './../../utils/AppError';
+import { AppError } from "./../../utils/AppError";
 import { prisma } from "../../lib/prisma";
-import { InviteMemberInput, AcceptInviteInput} from "./org.schema";
-import { hashPassword } from '../../utils/password';
-import { generateInviteToken } from '../../utils/generateInviteToken';
-import config from '../../config/config';
+import { InviteMemberInput, AcceptInviteInput } from "./org.schema";
+import { hashPassword } from "../../utils/password";
+import { generateInviteToken } from "../../utils/generateInviteToken";
+import config from "../../config/config";
 
 export const inviteMember = async (data: InviteMemberInput) => {
-  const { email, role , orgId } = data;
-  
+  const { email, role, orgId } = data;
+
   // check if user already exists
   const existingUser = await prisma.user.findUnique({
     where: { email },
@@ -17,34 +17,32 @@ export const inviteMember = async (data: InviteMemberInput) => {
     throw new AppError("User already a part of an organization", 400);
   }
 
-  const token = generateInviteToken()
+  const token = generateInviteToken();
 
   // create invitation
   await prisma.invitation.create({
     data: {
       email,
       role,
-      organizationId:orgId,
+      organizationId: orgId,
       token,
       expiresAt: new Date(Date.now() + 3600000), // 1 hour in miliseconds
     },
   });
 
-
   const inviteLink = `${config.frontendUrl}/accept-invite/${token}`;
 
-
-  //todo : send invite email 
+  //todo : send invite email
 
   return inviteLink;
-}
+};
 
 export const acceptInvite = async (data: AcceptInviteInput) => {
   const { name, email, password, token } = data;
 
   // 1️⃣ get invitation
   const invitation = await prisma.invitation.findUnique({
-    where: { token }
+    where: { token },
   });
 
   if (!invitation) {
@@ -68,7 +66,7 @@ export const acceptInvite = async (data: AcceptInviteInput) => {
 
   // 5️⃣ prevent duplicate users
   const existingUser = await prisma.user.findUnique({
-    where: { email }
+    where: { email },
   });
 
   if (existingUser) {
@@ -86,13 +84,13 @@ export const acceptInvite = async (data: AcceptInviteInput) => {
         email,
         password: hashedPassword,
         role: invitation.role,
-        organizationId: invitation.organizationId
-      }
+        organizationId: invitation.organizationId,
+      },
     });
 
     await tx.invitation.update({
       where: { id: invitation.id },
-      data: { accepted: true }
+      data: { accepted: true },
     });
 
     return user;
@@ -100,6 +98,28 @@ export const acceptInvite = async (data: AcceptInviteInput) => {
 
   return {
     orgId: result.organizationId,
-    role: result.role
+    role: result.role,
   };
+};
+
+export const getMembers = async (orgId: string) => {
+  const organization = await prisma.organization.findUnique({
+    where: { id: orgId },
+    include: {
+      users: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
+    },
+  });
+
+  if (!organization) {
+    throw new AppError("Organization not found", 404);
+  }
+
+  return organization;
 };

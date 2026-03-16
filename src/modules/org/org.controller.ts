@@ -1,5 +1,5 @@
 import {Request, Response, NextFunction } from 'express';
-import { acceptInvite, inviteMember } from './org.service';
+import { acceptInvite, inviteMember , getMembers} from './org.service';
 import { AppError } from '../../utils/AppError';
 
 export const inviteMemberController = async (req:Request, res:Response, next:NextFunction) => {
@@ -41,4 +41,21 @@ export const acceptInviteController = async (req:Request, res:Response, next:Nex
     }
 }
 
+
+export const getMembersController = async (req:Request, res:Response, next:NextFunction) => {
+    try{
+
+        if(!req.user?.orgId){
+            throw new AppError('Organization id is required.', 401)
+        }
+       
+        const orgId = req.user.orgId;
+    
+        const result = await getMembers(orgId);
+
+       res.status(200).json(result)
+    }catch(error){
+        next(error)
+    }
+}
 
