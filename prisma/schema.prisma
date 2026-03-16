@@ -52,4 +52,5 @@ model Invitation {
   createdAt DateTime @default(now())
 
   @@map("invitations")
+  
 }

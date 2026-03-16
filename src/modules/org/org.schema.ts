@@ -7,9 +7,33 @@ const RoleSchema = z.enum(UserRoles);
 export const inviteMemberSchema = z.object({
     email:z.string().nonempty({message:"Email is required."}).email("Invalid email address"),
     role:z.enum(UserRoles),
-    orgId:z.string().nonempty({message:"Organization ID is required."})
+});
+
+export const acceptInviteSchema = z.object({
+    name: z.string().nonempty({message:"Name is required"}).min(3, "Name must be at least 3 characters long"),
+    email: z.string().nonempty({message:"Email is required"}).email("Invalid email address"),
+    password: z.string().nonempty({message:"Password is required"}).min(6, "Password must be at least 6 characters long"),
+    accepted:z.boolean().default(false)
 });
 
 
+
 export type Role = z.infer<typeof RoleSchema>;
-export type InviteMemberInput = z.infer<typeof inviteMemberSchema>; 
+
+
+
+export interface InviteMemberInput {
+     email:string;
+     role:'ADMIN' | 'MEMBER';
+     orgId:string;
+}
+
+
+export interface AcceptInviteInput {
+     name:string;
+     email:string;
+     password:string;
+     orgId:string;
+     token:string;
+     accepted:boolean;
+}

@@ -1,8 +1,8 @@
-import bcrypt from "bcryptjs";
 import {prisma} from "../../lib/prisma";
 import { AppError } from "../../utils/AppError";
 import { LoginInput, RegisterInput } from "./auth.schema";
 import { generateToken } from "../../lib/jwt";
+import { comparePassword, hashPassword } from "../../utils/password";
 
 
 export const registerUser = async (data: RegisterInput) => {
@@ -18,7 +18,7 @@ export const registerUser = async (data: RegisterInput) => {
   }
 
   // hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const hashedPassword = await hashPassword(password);
   // create organization + user in transaction
   const result = await prisma.$transaction(async (tx) => {
     const organization = await tx.organization.create({
@@ -63,9 +63,9 @@ export const loginUser = async (data: LoginInput) => {
   }
 
   // compare password
-  const comparePassword = await bcrypt.compare(password, existingUser.password);
+  const isValidPassword = await comparePassword(password, existingUser.password);
 
-  if (!comparePassword) {
+  if (!isValidPassword) {
     throw new AppError("Invalid credentials", 401);
   }
   // generate JWT token
