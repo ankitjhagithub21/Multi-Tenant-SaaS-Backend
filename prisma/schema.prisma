@@ -30,7 +30,7 @@ model User {
   password       String
   role           Role
   organizationId String
-
+  resetToken PasswordResetToken[]
   organization Organization @relation(fields: [organizationId], references: [id])
 
   createdAt DateTime @default(now())
@@ -54,4 +54,13 @@ model Invitation {
 
   @@map("invitations")
   
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  token     String   @unique // Store the hashed token
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }

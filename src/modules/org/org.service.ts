@@ -2,8 +2,8 @@ import { AppError } from "./../../utils/AppError";
 import { prisma } from "../../lib/prisma";
 import { InviteMemberInput, AcceptInviteInput, Role } from "./org.schema";
 import { hashPassword } from "../../utils/password";
-import { generateInviteToken } from "../../utils/generateInviteToken";
 import config from "../../config/config";
+import { generateHashToken, generateRawToken } from "../../utils/tokens";
 
 export const inviteMember = async (data: InviteMemberInput) => {
   const { email, role, orgId } = data;
@@ -17,20 +17,20 @@ export const inviteMember = async (data: InviteMemberInput) => {
     throw new AppError("User already a part of an organization", 400);
   }
 
-  const token = generateInviteToken();
-
+  const rawToken = generateRawToken();
+  const hashedToken = generateHashToken(rawToken);
   // create invitation
   await prisma.invitation.create({
     data: {
       email,
       role,
       organizationId: orgId,
-      token,
+      token:hashedToken,
       expiresAt: new Date(Date.now() + 3600000), // 1 hour in miliseconds
     },
   });
 
-  const inviteLink = `${config.frontendUrl}/accept-invite/${token}`;
+  const inviteLink = `${config.frontendUrl}/accept-invite/${rawToken}`;
 
   //todo : send invite email
 
@@ -40,9 +40,11 @@ export const inviteMember = async (data: InviteMemberInput) => {
 export const acceptInvite = async (data: AcceptInviteInput) => {
   const { name, email, password, token } = data;
 
+  const hashedToken = generateHashToken(token);
+
   // 1️⃣ get invitation
   const invitation = await prisma.invitation.findUnique({
-    where: { token },
+    where: { token : hashedToken },
   });
 
   if (!invitation) {

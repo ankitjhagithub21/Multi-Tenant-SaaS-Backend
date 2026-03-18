@@ -1,6 +1,6 @@
 import { cookieOptions } from "../../lib/cookies";
 import { AppError } from "../../utils/AppError";
-import { getCurrentUser, loginUser, registerUser } from "./auth.service";
+import { forgotPassword, getCurrentUser, loginUser, registerUser, resetPassword } from "./auth.service";
 import {NextFunction, Request, Response} from "express";
 
 export const registerController = async (req:Request, res:Response, next:NextFunction) => {
@@ -80,3 +80,39 @@ export const getUserController = async (req:Request, res:Response, next:NextFunc
     next(error);
   }
 }
+
+export const forgotPasswordController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const {email} = req.body;
+
+    const resetLink = await forgotPassword(email);
+
+    res.status(200).json({
+       success:true,
+       resetLink
+    });
+    
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const resetPasswordController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    
+
+    const token = req.params.token as string;
+
+    const {newPassword} = req.body;
+
+    await resetPassword(token, newPassword);
+
+    res.status(200).json({
+       success:true,
+       message:"Password reset successfully."
+    });
+    
+  } catch (error) {
+    next(error);
+  }
+};
