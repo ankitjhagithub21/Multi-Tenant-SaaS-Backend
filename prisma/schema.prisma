@@ -34,10 +34,11 @@ model User {
   organization Organization @relation(fields: [organizationId], references: [id])
 
   createdAt DateTime @default(now())
-
+  invitations Invitation[]
   @@map("users")
   @@unique([id, organizationId])
 }
+
 
 model Invitation {
   id             String   @id @default(uuid())
@@ -48,13 +49,19 @@ model Invitation {
   expiresAt      DateTime
   accepted       Boolean  @default(false)
 
+  invitedById String?
+  invitedBy   User? @relation(fields: [invitedById], references: [id])
+
   organization Organization @relation(fields: [organizationId], references: [id])
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt 
 
+  @@unique([email, organizationId])
+  @@index([organizationId])
   @@map("invitations")
-  
 }
+
 
 model PasswordResetToken {
   id        String   @id @default(uuid())

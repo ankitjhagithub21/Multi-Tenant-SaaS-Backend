@@ -4,36 +4,55 @@ import { InviteMemberInput, AcceptInviteInput, Role } from "./org.schema";
 import { hashPassword } from "../../utils/password";
 import config from "../../config/config";
 import { generateHashToken, generateRawToken } from "../../utils/tokens";
+import { add, isBefore } from "date-fns";
 
 export const inviteMember = async (data: InviteMemberInput) => {
-  const { email, role, orgId } = data;
+  const { email, role, orgId, invitedById } = data;
 
-  // check if user already exists
+  // check if user already exists in same org
   const existingUser = await prisma.user.findUnique({
     where: { email },
   });
 
-  if (existingUser) {
-    throw new AppError("User already a part of an organization", 400);
+  if (existingUser && existingUser.organizationId === orgId) {
+    throw new AppError("User already a member of this organization", 400);
   }
 
+  // check duplicate invite
+  const existingInvite = await prisma.invitation.findFirst({
+    where: {
+      email,
+      organizationId: orgId,
+      accepted: false,
+    },
+  });
+
+  if (existingInvite) {
+    throw new AppError("User already invited", 400);
+  }
+
+  // generate tokens
   const rawToken = generateRawToken();
   const hashedToken = generateHashToken(rawToken);
+
+  // expiry
+  const expiresAt = add(new Date(Date.now()), { minutes: 15 });
+
   // create invitation
   await prisma.invitation.create({
     data: {
       email,
       role,
       organizationId: orgId,
-      token:hashedToken,
-      expiresAt: new Date(Date.now() + 3600000), // 1 hour in miliseconds
+      token: hashedToken,
+      expiresAt,
+      invitedById,
     },
   });
 
   const inviteLink = `${config.frontendUrl}/accept-invite/${rawToken}`;
 
-  //todo : send invite email
-
+  // TODO: send email
   return inviteLink;
 };
 
@@ -44,7 +63,7 @@ export const acceptInvite = async (data: AcceptInviteInput) => {
 
   // 1️⃣ get invitation
   const invitation = await prisma.invitation.findUnique({
-    where: { token : hashedToken },
+    where: { token: hashedToken },
   });
 
   if (!invitation) {
@@ -56,8 +75,7 @@ export const acceptInvite = async (data: AcceptInviteInput) => {
     throw new AppError("Invitation already accepted.", 400);
   }
 
-  // 3️⃣ expiration check
-  if (invitation.expiresAt < new Date()) {
+  if (isBefore(invitation.expiresAt, new Date())) {
     throw new AppError("Invitation expired.", 400);
   }
 
@@ -127,7 +145,6 @@ export const getMembers = async (orgId: string) => {
 };
 
 export const deleteMember = async (orgId: string, userId: string) => {
-
   const result = await prisma.user.delete({
     where: {
       id_organizationId: {
@@ -155,18 +172,41 @@ export const updateRole = async (orgId: string, userId: string, role: Role) => {
     data: {
       role: role,
     },
-    select:{
-       id:true,
-       email:true,
-       role:true,
-       organizationId:true,
-
-    }
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      organizationId: true,
+    },
   });
 
   if (!result) {
     throw new AppError("Member not found.", 404);
   }
+
+  return result;
+};
+
+export const getPendingInvitations = async (orgId: string) => {
+  const result = await prisma.invitation.findMany({
+    where: {
+      organizationId: orgId,
+      accepted: false,
+      expiresAt: {
+        gt: new Date(),
+      },
+    },
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      createdAt: true,
+      expiresAt: true,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
   return result;
 };

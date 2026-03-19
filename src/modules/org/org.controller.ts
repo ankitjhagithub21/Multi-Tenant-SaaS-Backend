@@ -5,6 +5,7 @@ import {
   getMembers,
   deleteMember,
   updateRole,
+  getPendingInvitations,
 } from "./org.service";
 import { AppError } from "../../utils/AppError";
 
@@ -17,14 +18,15 @@ export const inviteMemberController = async (
   try {
     const { email, role } = req.body;
 
-    if (!req.user?.orgId) {
-      throw new AppError("Organization id is required.", 400);
+    if (!req.user) {
+      throw new AppError("Unauthorized.", 401);
     }
 
     const inviteLink = await inviteMember({
       email,
       role,
       orgId: req.user.orgId,
+      invitedById:req.user.id,
     });
 
     res.status(201).json({
@@ -138,3 +140,26 @@ export const updateRoleController = async (
     next(error);
   }
 };
+
+export const getInvitationsController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    if (!req.user?.orgId) {
+      throw new AppError("Organization id is required.", 401);
+    }
+
+    const result = await getPendingInvitations(req.user.orgId);
+
+    res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+

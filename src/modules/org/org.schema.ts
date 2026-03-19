@@ -24,6 +24,7 @@ export interface InviteMemberInput {
      email:string;
      role:'ADMIN' | 'MEMBER';
      orgId:string;
+     invitedById:string;
 }
 
 
