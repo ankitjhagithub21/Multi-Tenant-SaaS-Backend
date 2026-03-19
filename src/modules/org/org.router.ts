@@ -1,4 +1,4 @@
-import { acceptInviteController, deleteMembersController, getMembersController, inviteMemberController, updateRoleController , getInvitationsController} from './org.controller';
+import { acceptInviteController, deleteMembersController, getMembersController, inviteMemberController, updateRoleController , getInvitationsController, cancelInvitationController} from './org.controller';
 import { isAuth } from './../../middlewares/isAuth';
 import { Role } from '../../generated/prisma/enums';
 import { checkRole } from './../../middlewares/checkRole';
@@ -24,7 +24,13 @@ router.post(
   acceptInviteController
 );
 
-router.get("/pending-invitations", isAuth , checkRole(Role.ADMIN), getInvitationsController)
+router.get("/invitations", isAuth , checkRole(Role.ADMIN), getInvitationsController)
+
+
+router.delete(
+  "/invitations/:id",
+  cancelInvitationController
+);
 
 router.get("/members", isAuth, getMembersController)
 

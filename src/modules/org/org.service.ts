@@ -158,7 +158,7 @@ export const deleteMember = async (orgId: string, userId: string) => {
     throw new AppError("Member not found", 404);
   }
 
-  return true;
+  return {message:"Member deleted successfully."};
 };
 
 export const updateRole = async (orgId: string, userId: string, role: Role) => {
@@ -187,14 +187,12 @@ export const updateRole = async (orgId: string, userId: string, role: Role) => {
   return result;
 };
 
-export const getPendingInvitations = async (orgId: string) => {
+export const getInvitations = async (orgId: string, accepted:boolean | undefined) => {
+  
   const result = await prisma.invitation.findMany({
     where: {
       organizationId: orgId,
-      accepted: false,
-      expiresAt: {
-        gt: new Date(),
-      },
+      ...(accepted !== undefined && {accepted})
     },
     select: {
       id: true,
@@ -210,3 +208,29 @@ export const getPendingInvitations = async (orgId: string) => {
 
   return result;
 };
+
+export const cancelInvitation = async (id: string) => {
+
+  const invitation = await prisma.invitation.findUnique({
+    where:{
+       id
+    }
+  })
+
+  if(!invitation){
+     throw new AppError("Invitation not found.", 404)
+  }
+
+  //already accepted 
+  if(invitation.accepted){
+     throw new AppError("Invitation already accepted.", 400)
+  }
+
+  await prisma.invitation.delete({
+    where: {
+      id,
+    },
+  });
+
+  return { message: "Invitation cancelled successfully." };
+}

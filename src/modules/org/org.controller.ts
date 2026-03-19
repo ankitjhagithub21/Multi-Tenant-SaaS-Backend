@@ -5,10 +5,10 @@ import {
   getMembers,
   deleteMember,
   updateRole,
-  getPendingInvitations,
+  cancelInvitation,
+  getInvitations,
 } from "./org.service";
 import { AppError } from "../../utils/AppError";
-
 
 export const inviteMemberController = async (
   req: Request,
@@ -26,7 +26,7 @@ export const inviteMemberController = async (
       email,
       role,
       orgId: req.user.orgId,
-      invitedById:req.user.id,
+      invitedById: req.user.id,
     });
 
     res.status(201).json({
@@ -98,17 +98,16 @@ export const deleteMembersController = async (
 
     const orgId = req.user.orgId;
 
-    await deleteMember(orgId, memberId);
+    const result = await deleteMember(orgId, memberId);
 
     res.status(200).json({
-        success:true,
-        message:"Member deleted successfully."
+      success: true,
+      message: result.message,
     });
   } catch (error) {
     next(error);
   }
 };
-
 
 export const updateRoleController = async (
   req: Request,
@@ -118,7 +117,7 @@ export const updateRoleController = async (
   try {
     const memberId = req.params.memberId as string;
 
-    const {role} = req.body;
+    const { role } = req.body;
 
     if (!req.user?.orgId) {
       throw new AppError("Organization id is required.", 401);
@@ -129,12 +128,12 @@ export const updateRoleController = async (
     const result = await updateRole(orgId, memberId, role);
 
     res.status(200).json({
-        success:true,
-        message:"Member role updated successfully.",
-        data:{
-           orgId:result.organizationId,
-           newRole:result.role
-        }
+      success: true,
+      message: "Member role updated successfully.",
+      data: {
+        orgId: result.organizationId,
+        newRole: result.role,
+      },
     });
   } catch (error) {
     next(error);
@@ -151,7 +150,14 @@ export const getInvitationsController = async (
       throw new AppError("Organization id is required.", 401);
     }
 
-    const result = await getPendingInvitations(req.user.orgId);
+    const accepted =
+      req.query.accepted === "true"
+        ? true
+        : req.query.accepted === "false"
+          ? false
+          : undefined;
+
+    const result = await getInvitations(req.user.orgId, accepted);
 
     res.status(200).json({
       success: true,
@@ -162,4 +168,22 @@ export const getInvitationsController = async (
   }
 };
 
+export const cancelInvitationController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const id = req.params.id as string;
 
+    const result = await cancelInvitation(id);
+
+    res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+    
+  } catch (error) {
+    next(error);
+  }
+};
